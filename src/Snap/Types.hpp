@@ -52,8 +52,26 @@ namespace Snap {
         I8 = 7,
 
         F64 = 8,
-        F32 = 9,
+        F32 = 9
     };
+
+    inline std::string ValueTypeToString(ValueType t) {
+        switch (t) {
+            case ValueType::U64: return "u64";
+            case ValueType::U32: return "u32";
+            case ValueType::U16: return "u16";
+            case ValueType::U8:  return "u8";
+
+            case ValueType::I64: return "i64";
+            case ValueType::I32: return "i32";
+            case ValueType::I16: return "i16";
+            case ValueType::I8:  return "i8";
+
+            case ValueType::F32:  return "f32";
+            case ValueType::F64:  return "f64";
+            default: assert(false);
+        }
+    }
 
     union ValueData {
         u64 u64;

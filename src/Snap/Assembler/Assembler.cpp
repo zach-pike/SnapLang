@@ -10,7 +10,7 @@
 #include "VM/Instruction.hpp"
 #include "Compiler/Tokenizer.hpp"
 
-void insertBytesBasedOnType(std::vector<Snap::u8>& bytes, Snap::AssemblerType t, std::string raw) {
+void InsertArgBytes(std::vector<Snap::u8>& bytes, Snap::AssemblerType t, std::string raw) {
     using namespace Snap;
     switch(t) {
         case Snap::AssemblerType::U64: {
@@ -66,35 +66,44 @@ void insertBytesBasedOnType(std::vector<Snap::u8>& bytes, Snap::AssemblerType t,
     }
 }
 
+bool PeekToken(const std::vector<Snap::Token>& tokens, std::size_t i, Snap::TokenType ty) {
+    return tokens.at(i).type == ty;
+}
+
+Snap::Token ExpectToken(const std::vector<Snap::Token>& tokens, std::size_t& i, Snap::TokenType ty) {
+    Snap::Token tok = tokens.at(i);
+    if (tok.type != ty) {
+        std::cout << "Expected: " << (int)ty << " Got: " << (int)tok.type << '\n';
+        assert(false);
+    }
+    i++;
+    return tok;
+}
+
 std::vector<Snap::u8> Snap::Assemble(std::string filepath) {
     std::ifstream f(filepath);
     std::stringstream ss;
     ss << f.rdbuf();
 
     // offsets local to just the sections (ignoring everything else esentially)
-    std::vector<std::pair<std::string, u64>> sectionLocalOffsets;
     std::vector<Token> tokens = Tokenize(ss.str());
     std::vector<u8> sectionData;
-
-    std::vector<std::pair<std::string, u64>> sectionFillIn;
-
-    auto PeekToken = [&](std::size_t i, TokenType t) {
-        return tokens.at(i).type == t;
-    };
+    std::vector<std::pair<std::string, u64>> sectionLocalOffsets;
+    std::vector<std::pair<std::string, u64>> unresolvedSectionAddressValueLocalOffsets;
 
     auto PushOpcodeBytes = [&](Instruction instr) {
         u8* ptr = reinterpret_cast<u8*>(&instr);
         sectionData.insert(sectionData.end(), ptr, ptr + sizeof(instr));
     };
 
-    int i=0;
+    std::size_t i=0;
     while (i < tokens.size()) {
         // Section definition
         if (
             (i+1) < tokens.size() &&
-            PeekToken(i, TokenType::LITERAL) && 
-            PeekToken(i+1, TokenType::COLON) && 
-            ((i+2) == tokens.size() || PeekToken(i+2, TokenType::NEWLINE))
+            PeekToken(tokens, i, TokenType::LITERAL) && 
+            PeekToken(tokens, i+1, TokenType::COLON) && 
+            ((i+2) == tokens.size() || PeekToken(tokens, i+2, TokenType::NEWLINE))
         ) {
             sectionLocalOffsets.push_back(
                 std::make_pair(
@@ -105,80 +114,30 @@ std::vector<Snap::u8> Snap::Assemble(std::string filepath) {
 
             i += 3;
             continue;
-        }
-
-        // Instruction with no arg
-        if (
-            PeekToken(i, TokenType::LITERAL) &&
-            ((i+1) == tokens.size() || PeekToken(i+1, TokenType::NEWLINE))
-        ) {
-            Instruction in = StringToInstruction.at(tokens.at(i).data.value());
+        } else if (PeekToken(tokens, i, TokenType::LITERAL)) {
+            std::string firstLiteral = ExpectToken(tokens, i, TokenType::LITERAL).data.value();
+            Instruction in = StringToInstruction.at(firstLiteral);
             PushOpcodeBytes(in);
 
-            i += 2;
-            continue;
-        }
+            // Get args if the instruction needs it
+            if (InstructionArgTypes.count(in)) {
+                auto args = InstructionArgTypes.at(in);
 
-        // Instruction with one arg
-        if (
-            (i+1) < tokens.size() &&
-            PeekToken(i, TokenType::LITERAL) &&
-            PeekToken(i+1, TokenType::LITERAL) &&
-            ((i+2) == tokens.size() || PeekToken(i+2, TokenType::NEWLINE))
-        ) {
-            Instruction in = StringToInstruction.at(tokens.at(i).data.value());
-            PushOpcodeBytes(in);
+                for (int j=0; j<args.size(); j++) {
+                    std::string rawArg = ExpectToken(tokens, i, TokenType::LITERAL).data.value();
 
-            if (in == Instruction::JUMP || in == Instruction::JUMP_COND) {
-                std::string rawArg1 = tokens.at(i+1).data.value();
-
-                // Push current size to this list so we can go back and put the proper address in once
-                // all sections have been parsed
-                sectionFillIn.push_back(std::make_pair(rawArg1, sectionData.size()));
-                // Fill in zero for now
-                insertBytesBasedOnType(sectionData, AssemblerType::U64, "0");
-            } else {
-                std::string rawArg = tokens.at(i+1).data.value();
-                AssemblerType expectedType = InstructionArgTypes.at(in)[0];
-                insertBytesBasedOnType(sectionData, expectedType, rawArg);
+                    if (args.at(j) == AssemblerType::SECTION_OFFSET) {
+                        // Note position of current read head and fill in zero and
+                        // Code will come back and write in the addresses
+                        unresolvedSectionAddressValueLocalOffsets.push_back(std::make_pair(rawArg, sectionData.size()));
+                        InsertArgBytes(sectionData, AssemblerType::U64, "0");
+                    } else {
+                        InsertArgBytes(sectionData, args[j], rawArg);
+                    }
+                }
             }
             
-
-            i += 3;
-            continue;
-        }
-
-        //
-        if (
-            (i+2) < tokens.size() &&
-            PeekToken(i, TokenType::LITERAL) &&
-            PeekToken(i+1, TokenType::LITERAL) &&
-            PeekToken(i+2, TokenType::LITERAL) &&
-            ((i+3) == tokens.size() || PeekToken(i+3, TokenType::NEWLINE))
-        ) {
-            Instruction in = StringToInstruction.at(tokens.at(i).data.value());
-            PushOpcodeBytes(in);
-
-            if (in == Instruction::CALL) {
-                std::string rawArg1 = tokens.at(i+1).data.value();
-                std::string rawArg2 = tokens.at(i+2).data.value();
-
-                // Push current size to this list so we can go back and put the proper address in once
-                // all sections have been parsed
-                sectionFillIn.push_back(std::make_pair(rawArg1, sectionData.size()));
-                // Fill in zero for now
-                insertBytesBasedOnType(sectionData, AssemblerType::U64, "0");
-
-                auto argTypes = InstructionArgTypes.at(in);
-                insertBytesBasedOnType(sectionData, argTypes[1], rawArg2);
-            } else {
-                std::string rawArg = tokens.at(i+1).data.value();
-                AssemblerType expectedType = InstructionArgTypes.at(in)[0];
-
-                insertBytesBasedOnType(sectionData, expectedType, rawArg);
-            }
-
-            i += 3;
+            if (i < tokens.size() && PeekToken(tokens, i, TokenType::NEWLINE)) i += 1;
             continue;
         }
 
@@ -196,21 +155,22 @@ std::vector<Snap::u8> Snap::Assemble(std::string filepath) {
     }
 
     // Fill in section names now that we have parsed the full file
-    for (const auto& sect : sectionFillIn) {
+    for (const auto& sect : unresolvedSectionAddressValueLocalOffsets) {
         auto it = std::find_if(sectionLocalOffsets.begin(), sectionLocalOffsets.end(), [&sect](std::pair<std::string, u64> a) {
             return a.first == sect.first;
         });
 
-        if (it == sectionLocalOffsets.end()) assert(false);
+        assert(it != sectionLocalOffsets.end());
         *reinterpret_cast<u64*>(&sectionData[sect.second]) = sizeof(SnapCHeader) + it->second;
     }
+
+    // Start assembling SnapC file
+    std::vector<u8> assembledFile;
 
     // Header
     SnapCHeader header;
     header.versionMajor = SNAPC_VERSION_MAJOR;
     header.versionMinor = SNAPC_VERSION_MINOR;
-
-    // Magic bytes
     header.magicBytes = SNAPC_MAGIC_BYTES;
 
     // Section header comes directly after sections themselves
@@ -220,15 +180,13 @@ std::vector<Snap::u8> Snap::Assemble(std::string filepath) {
     // Section names come directly after the section headers
     header.sectionNameArrayOffset = 
         header.sectionHeaderOffset + 
-        sectionLocalOffsets.size() * sizeof(SnapCSectionHeader);
+        header.sectionHeaderCount * sizeof(SnapCSectionHeader);
 
-    std::vector<u8> assembledFile;
-
-    // Insert file header
+    // Insert header
     u8* headerptr = reinterpret_cast<u8*>(&header);
     assembledFile.insert(assembledFile.end(), headerptr, headerptr + sizeof(header));
 
-    // Insert sections
+    // Insert section data
     assembledFile.insert(assembledFile.end(), sectionData.begin(), sectionData.end());
 
     // Insert section headers
@@ -241,7 +199,7 @@ std::vector<Snap::u8> Snap::Assemble(std::string filepath) {
         assembledFile.insert(assembledFile.end(), sectHeaderPtr, sectHeaderPtr + sizeof(SnapCSectionHeader));
     }
 
-    // Insert section name
+    // Insert section names
     for (int i=0; i<sectionLocalOffsets.size(); i++) {
         std::string name = sectionLocalOffsets.at(i).first;
         assembledFile.insert(assembledFile.end(), name.begin(), name.end());

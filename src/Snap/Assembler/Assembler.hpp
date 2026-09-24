@@ -22,7 +22,9 @@ namespace Snap {
         I8  = 7,
 
         F32 = 8,
-        F64 = 9
+        F64 = 9,
+
+        SECTION_OFFSET = 10
     };
 
     const std::unordered_map<std::string_view, Instruction> StringToInstruction = {
@@ -81,9 +83,9 @@ namespace Snap {
         { Instruction::PUSH_F32, { AssemblerType::F32 } },
         { Instruction::PUSH_F64, { AssemblerType::F64 } },
 
-        { Instruction::CALL, { AssemblerType::U64, AssemblerType::U8 } },
-        { Instruction::JUMP, { AssemblerType::U64 } },
-        { Instruction::JUMP_COND, { AssemblerType::U64 } },
+        { Instruction::CALL, { AssemblerType::SECTION_OFFSET, AssemblerType::U8 } },
+        { Instruction::JUMP, { AssemblerType::SECTION_OFFSET } },
+        { Instruction::JUMP_COND, { AssemblerType::SECTION_OFFSET } },
         
         { Instruction::LOAD_LOCAL, { AssemblerType::U8 } },
         { Instruction::STORE_LOCAL, { AssemblerType::U8 } },
