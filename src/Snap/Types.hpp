@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <assert.h>
+#include <string_view>
+#include <unordered_map>
 
 #define SNAPC_MAGIC_BYTES 0x420
 
@@ -41,37 +43,66 @@ namespace Snap {
     } __attribute__((packed));
 
     enum class ValueType : std::uint8_t {
-        U64 = 0,
-        U32 = 1,
-        U16 = 2,
-        U8 = 3,
+        VOID = 0,
+        U64 = 1,
+        U32 = 2,
+        U16 = 3,
+        U8 = 4,
 
-        I64 = 4,
-        I32 = 5,
-        I16 = 6,
-        I8 = 7,
+        I64 = 5,
+        I32 = 6,
+        I16 = 7,
+        I8 = 8,
 
-        F64 = 8,
-        F32 = 9
+        F64 = 9,
+        F32 = 10
     };
 
-    inline std::string ValueTypeToString(ValueType t) {
-        switch (t) {
-            case ValueType::U64: return "u64";
-            case ValueType::U32: return "u32";
-            case ValueType::U16: return "u16";
-            case ValueType::U8:  return "u8";
+    const std::unordered_map<ValueType, std::string_view> ValueTypeToStringLookup = {
+        { ValueType::VOID, "void" },
+        { ValueType::U64, "u64" },
+        { ValueType::U32, "u32" },
+        { ValueType::U16, "u16" },
+        { ValueType::U8,  "u8" },
 
-            case ValueType::I64: return "i64";
-            case ValueType::I32: return "i32";
-            case ValueType::I16: return "i16";
-            case ValueType::I8:  return "i8";
+        { ValueType::I64, "i64" },
+        { ValueType::I32, "i32" },
+        { ValueType::I16, "i16" },
+        { ValueType::I8,  "i8" },
 
-            case ValueType::F32:  return "f32";
-            case ValueType::F64:  return "f64";
-            default: assert(false);
-        }
-    }
+        { ValueType::F32, "f32" },
+        { ValueType::F64, "f64" },
+    };
+
+    const std::unordered_map<std::string_view, ValueType> StringToValueTypeLookup = {
+        { "void", ValueType::VOID },
+        {  "u64", ValueType::U64 },
+        {  "u32", ValueType::U32 },
+        {  "u16", ValueType::U16 },
+        {   "u8", ValueType::U8 },
+
+        {  "i64", ValueType::I64 },
+        {  "i32", ValueType::I32 },
+        {  "i16", ValueType::I16 },
+        {   "i8", ValueType::I8 },
+
+        {  "f32", ValueType::F32 },
+        {  "f64", ValueType::F64 }
+    };
+
+    const std::unordered_map<ValueType, std::size_t> ValueTypeByteWidthLookup = {
+        { ValueType::VOID, 0 },
+        { ValueType::U64, 8 },
+        { ValueType::U32, 4 },
+        { ValueType::U16, 2 },
+        { ValueType::U8, 1 },
+        { ValueType::I64, 8 },
+        { ValueType::I32, 4 },
+        { ValueType::I16, 2 },
+        { ValueType::I8, 1 },
+        { ValueType::F32, 4 },
+        { ValueType::F64, 8 },
+    };
 
     union ValueData {
         u64 u64;

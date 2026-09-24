@@ -18,9 +18,11 @@ namespace Snap {
         ~OperandStack();
 
         void push(Value v);
-        Value pop();
+        Value pop(std::size_t n = 1);
         Value& back();
         std::size_t size() const;
+
+        std::vector<Value> getLastNElems(std::size_t n);
 
         void dump() const;
     };

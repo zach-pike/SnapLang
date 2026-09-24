@@ -15,6 +15,7 @@ include_directories(src/Snap/)
 add_library(Snap ${SNAP_SRC})
 add_executable(Test ${TEST_SRC})
 
-configure_file(test.txt test.txt COPYONLY)
+# configure_file(fib.txt fib.txt COPYONLY)
+configure_file(test.snapir test.snapir COPYONLY)
 
 target_link_libraries(Test PRIVATE Snap)

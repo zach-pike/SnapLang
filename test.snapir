@@ -1,0 +1,8 @@
+fn f32 @Test(f32 %a, f32 %b) {
+    return div(%a, %b);
+}
+
+fn f32 @Main() {
+    f32 %res = call Test(f32(1), f32(2));
+    return %res;
+}

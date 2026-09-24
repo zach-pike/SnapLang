@@ -185,8 +185,8 @@ std::optional<Snap::Value> Snap::VM::stepExecution() {
             instructionPointer += sizeof(Instruction) + sizeof(f64);
         } break;
         case Instruction::ADD: {
-            auto lhs = operandStack.pop();
             auto rhs = operandStack.pop();
+            auto lhs = operandStack.pop();
 
             operandStack.push(binaryOp(lhs, rhs, [](auto a, auto b) {
                 return a + b;
@@ -196,8 +196,8 @@ std::optional<Snap::Value> Snap::VM::stepExecution() {
         } break;
 
         case Instruction::SUBTRACT: {
-            auto lhs = operandStack.pop();
             auto rhs = operandStack.pop();
+            auto lhs = operandStack.pop();
 
             operandStack.push(binaryOp(lhs, rhs, [](auto a, auto b) {
                 return a - b;
@@ -207,8 +207,8 @@ std::optional<Snap::Value> Snap::VM::stepExecution() {
         } break;
 
         case Instruction::MULTIPLY: {
-            auto lhs = operandStack.pop();
             auto rhs = operandStack.pop();
+            auto lhs = operandStack.pop();
 
             operandStack.push(binaryOp(lhs, rhs, [](auto a, auto b) {
                 return a * b;
@@ -218,8 +218,8 @@ std::optional<Snap::Value> Snap::VM::stepExecution() {
         } break;
 
         case Instruction::DIVIDE: {
-            auto lhs = operandStack.pop();
             auto rhs = operandStack.pop();
+            auto lhs = operandStack.pop();
 
             operandStack.push(binaryOp(lhs, rhs, [](auto a, auto b) {
                 return a / b;
@@ -258,11 +258,15 @@ std::optional<Snap::Value> Snap::VM::stepExecution() {
             // instruction directly after the call
             instructionPointer += sizeof(Instruction) + sizeof(u64) + sizeof(u8);
 
+            
             CallStackFrame frame;
             assert(argCount < frame.locals.size());
+            assert(operandStack.size() >= argCount);
+            auto args = operandStack.getLastNElems(argCount);
+            operandStack.pop(argCount);
+
             for (int i=0; i<argCount; i++) {
-                auto val = operandStack.pop();
-                frame.locals[i] = val;
+                frame.locals[i] = args[i];
             }
 
             frame.ip = jumpOffset;
@@ -297,8 +301,8 @@ std::optional<Snap::Value> Snap::VM::stepExecution() {
         } break;
 
         case Instruction::CMP_EQ: {
-            auto lhs = operandStack.pop();
             auto rhs = operandStack.pop();
+            auto lhs = operandStack.pop();
 
             operandStack.push(compareOp(lhs, rhs, [](auto a, auto b) {
                 return a == b;
@@ -308,8 +312,8 @@ std::optional<Snap::Value> Snap::VM::stepExecution() {
         } break;
 
         case Instruction::CMP_NEQ: {
-            auto lhs = operandStack.pop();
             auto rhs = operandStack.pop();
+            auto lhs = operandStack.pop();
 
             operandStack.push(compareOp(lhs, rhs, [](auto a, auto b) {
                 return a != b;
@@ -319,8 +323,8 @@ std::optional<Snap::Value> Snap::VM::stepExecution() {
         } break;
 
         case Instruction::CMP_LT: {
-            auto lhs = operandStack.pop();
             auto rhs = operandStack.pop();
+            auto lhs = operandStack.pop();
 
             operandStack.push(compareOp(lhs, rhs, [](auto a, auto b) {
                 return a < b;
@@ -330,8 +334,8 @@ std::optional<Snap::Value> Snap::VM::stepExecution() {
         } break;
 
         case Instruction::CMP_GT: {
-            auto lhs = operandStack.pop();
             auto rhs = operandStack.pop();
+            auto lhs = operandStack.pop();
 
             operandStack.push(compareOp(lhs, rhs, [](auto a, auto b) {
                 return a > b;
@@ -341,8 +345,8 @@ std::optional<Snap::Value> Snap::VM::stepExecution() {
         } break;
 
         case Instruction::CMP_LTE: {
-            auto lhs = operandStack.pop();
             auto rhs = operandStack.pop();
+            auto lhs = operandStack.pop();
 
             operandStack.push(compareOp(lhs, rhs, [](auto a, auto b) {
                 return a <= b;
@@ -352,8 +356,8 @@ std::optional<Snap::Value> Snap::VM::stepExecution() {
         } break;
 
         case Instruction::CMP_GTE: {
-            auto lhs = operandStack.pop();
             auto rhs = operandStack.pop();
+            auto lhs = operandStack.pop();
 
             operandStack.push(compareOp(lhs, rhs, [](auto a, auto b) {
                 return a >= b;

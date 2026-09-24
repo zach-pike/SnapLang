@@ -35,6 +35,7 @@ Take a single literal value (100, 700, 1000, -32) and pushes to stack
 
 ## Math functions (add, subtract, multiply, divide, etc..)
 Pops two values off stack and tries to add them, expects the same data type for both values.
+rhs is the top item on stack
 
 Pushes result back to stack
 
@@ -49,13 +50,13 @@ Test:
 Main:
 PUSH_U64 10
 PUSH_U64 20
-CALL Test
+CALL Test 2
 RETURN
 ```
 `Test`s Call Stack Locals
 | Idx |  0  |  1  |  2  |  3  |  4  |  5  |
 |-----|-----|-----|-----|-----|-----|-----|
-| Val | U64(20) | U64(10) | nil | nil | nil | nil |
+| Val | U64(10) | U64(20) | nil | nil | nil | nil |
 
 To load the values onto the stack, refer to the next section
 

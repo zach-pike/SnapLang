@@ -52,13 +52,15 @@ void Snap::OperandStack::push(Value v) {
     stack.push_back(v);
 }
 
-Snap::Value Snap::OperandStack::pop() {
+Snap::Value Snap::OperandStack::pop(std::size_t n) {
     if (stack.size() == 0) {
         assert(false);
     }
 
     Value a = stack.back();
-    stack.pop_back();
+    for (int i=0; i<n; i++) {
+        stack.pop_back();
+    }
     return a;
 }
 
@@ -78,4 +80,11 @@ void Snap::OperandStack::dump() const {
         auto v = stack.at(i);
         std::cout << std::format("{:05} | {}", i, ValueToString(v)) << std::endl;
     }
+}
+
+std::vector<Snap::Value> Snap::OperandStack::getLastNElems(std::size_t n) {
+    return std::vector<Snap::Value>(
+        stack.end() - n,
+        stack.end()
+    );
 }

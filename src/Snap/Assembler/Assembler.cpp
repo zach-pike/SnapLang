@@ -103,7 +103,7 @@ std::vector<Snap::u8> Snap::Assemble(std::string filepath) {
             (i+1) < tokens.size() &&
             PeekToken(tokens, i, TokenType::LITERAL) && 
             PeekToken(tokens, i+1, TokenType::COLON) && 
-            ((i+2) == tokens.size() || PeekToken(tokens, i+2, TokenType::NEWLINE))
+            ((i+2) == tokens.size() || PeekToken(tokens, i+2, TokenType::SEMICOLON))
         ) {
             sectionLocalOffsets.push_back(
                 std::make_pair(
@@ -137,7 +137,7 @@ std::vector<Snap::u8> Snap::Assemble(std::string filepath) {
                 }
             }
             
-            if (i < tokens.size() && PeekToken(tokens, i, TokenType::NEWLINE)) i += 1;
+            if (i < tokens.size() && PeekToken(tokens, i, TokenType::SEMICOLON)) i += 1;
             continue;
         }
 

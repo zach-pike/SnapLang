@@ -7,6 +7,5 @@
 
 
 namespace Snap {
-    std::string TokenTypeToString(TokenType t);
     std::vector<Token> Tokenize(const std::string& input);
 }
