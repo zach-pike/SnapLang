@@ -28,6 +28,7 @@ namespace Snap {
         ~VM();
 
         void loadSnapCBinary(const std::vector<std::uint8_t>& code);
+        void loadSnapCFile(std::string filepath);
         std::optional<Snap::Value> call(std::string functionName, std::vector<Snap::Value> args = {});
         void reset();
         

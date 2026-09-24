@@ -6,6 +6,7 @@
 #include "Types.hpp"
 #include "Instruction.hpp"
 #include "CallStack/CallStack.hpp"
+#include "Utility/Utility.hpp"
 
 Snap::VM::VM() {}
 Snap::VM::~VM() {}
@@ -39,6 +40,12 @@ void Snap::VM::loadSnapCBinary(const std::vector<std::uint8_t>& code) {
     bytecode = code;
     decodeSnapCHeader();
     reset();
+}
+
+void Snap::VM::loadSnapCFile(std::string filepath) {
+    auto a = Utility::ReadBinaryFile(filepath);
+    assert(a.has_value());
+    loadSnapCBinary(a.value());
 }
 
 std::optional<Snap::Value> Snap::VM::call(std::string s, std::vector<Snap::Value> args) {
