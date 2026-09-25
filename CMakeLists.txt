@@ -15,7 +15,6 @@ include_directories(src/Snap/)
 add_library(Snap ${SNAP_SRC})
 add_executable(Test ${TEST_SRC})
 
-# configure_file(fib.txt fib.txt COPYONLY)
-configure_file(test.snapir test.snapir COPYONLY)
+file(COPY "${CMAKE_SOURCE_DIR}/SnapCExamples" DESTINATION "${CMAKE_BINARY_DIR}")
 
 target_link_libraries(Test PRIVATE Snap)

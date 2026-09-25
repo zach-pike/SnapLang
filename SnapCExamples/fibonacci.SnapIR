@@ -1,0 +1,15 @@
+fn u32 @Fibonacci(u32 %num) {
+    u32 %n1 = u32(0);
+    u32 %n2 = u32(1);
+
+    u32 %i = u32(1);
+    loop:
+    u32 %sum = add(%n1, %n2);
+    %n1 = %n2;
+    %n2 = %sum;
+
+    %i = add(%i, u32(1));
+    jumpc loop, lt(%i, %num);
+
+    return %sum;
+}

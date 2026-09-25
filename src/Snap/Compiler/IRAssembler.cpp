@@ -33,7 +33,6 @@ static const std::unordered_map<std::string_view, Snap::Instruction> TernaryOps 
 
 std::vector<Snap::u8> Snap::AssembleIR(std::string ir) {
     auto tokens = Tokenize(ir);
-    PrintTokens(tokens);
     std::size_t tokenIndex = 0;
 
     std::vector<u8> sectionData;
@@ -181,7 +180,6 @@ std::vector<Snap::u8> Snap::AssembleIR(std::string ir) {
             }
         }
     };
-
     auto ParseExpression = [&](std::vector<ScopeVariable>& vars) {
         // Label definition
         if (CheckToken(TokenType::LITERAL) && CheckToken(TokenType::COLON, 1)) {
@@ -198,7 +196,7 @@ std::vector<Snap::u8> Snap::AssembleIR(std::string ir) {
             ExpectToken(TokenType::RETURN);
 
             // No return value
-            if (CheckToken(TokenType::SEMICOLON, 1)) {
+            if (CheckToken(TokenType::SEMICOLON)) {
                 InsertOpcode(Instruction::RETURN);
             }
             // Return value
