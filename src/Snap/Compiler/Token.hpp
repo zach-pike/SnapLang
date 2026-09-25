@@ -30,6 +30,8 @@ namespace Snap {
         FUNCTION_DEF = 15,
         RETURN = 16,
         CALL = 17,
+        JUMP = 18,
+        JUMP_COND = 19,
     };
 
     const std::unordered_map<std::string_view, Snap::TokenType> StringToTokenLookup = {
@@ -49,7 +51,9 @@ namespace Snap {
 
         { "fn", TokenType::FUNCTION_DEF },
         { "return", TokenType::RETURN },
-        { "call", TokenType::CALL }
+        { "call", TokenType::CALL },
+        { "jump", TokenType::JUMP },
+        { "jumpc", TokenType::JUMP_COND },
     };
 
     const std::unordered_map<Snap::TokenType, std::string_view> TokenTypeToString = {
@@ -75,6 +79,9 @@ namespace Snap {
         { TokenType::FUNCTION_DEF, "FUNCTION_DEF" },
         { TokenType::RETURN, "RETURN" },
         { TokenType::CALL, "CALL" },
+
+        { TokenType::JUMP, "JUMP" },
+        { TokenType::JUMP_COND, "JUMP_COND" }
     };
 
     struct Token {

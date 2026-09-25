@@ -18,6 +18,13 @@ static const std::unordered_map<std::string_view, Snap::Instruction> BinaryMathO
     { "sub", Snap::Instruction::SUBTRACT },
     { "mult", Snap::Instruction::MULTIPLY },
     { "div", Snap::Instruction::DIVIDE },
+
+    { "lt", Snap::Instruction::CMP_LT },
+    { "gt", Snap::Instruction::CMP_GT },
+    { "lte", Snap::Instruction::CMP_LTE },
+    { "gte", Snap::Instruction::CMP_GTE },
+    { "eq", Snap::Instruction::CMP_EQ },
+    { "neq", Snap::Instruction::CMP_NEQ },
 };
 
 static const std::unordered_map<std::string_view, Snap::Instruction> TernaryOps = {
@@ -176,6 +183,17 @@ std::vector<Snap::u8> Snap::AssembleIR(std::string ir) {
     };
 
     auto ParseExpression = [&](std::vector<ScopeVariable>& vars) {
+        // Label definition
+        if (CheckToken(TokenType::LITERAL) && CheckToken(TokenType::COLON, 1)) {
+            Token labelToken = ExpectToken(TokenType::LITERAL);
+            std::string labelTokenStr = labelToken.data.value();
+            ExpectToken(TokenType::COLON);
+
+            sectionLocalOffsets.push_back(std::make_pair(labelTokenStr, sectionData.size()));
+            return;
+        }
+
+        // Return
         if (CheckToken(TokenType::RETURN)) {
             ExpectToken(TokenType::RETURN);
 
@@ -188,7 +206,34 @@ std::vector<Snap::u8> Snap::AssembleIR(std::string ir) {
                 ParseValue(vars);
                 InsertOpcode(Instruction::RETURN_V);
             }
-        } 
+        }
+        // Jump
+        else if (CheckToken(TokenType::JUMP)) {
+            ExpectToken(TokenType::JUMP);
+
+            Token labelNameToken = ExpectToken(TokenType::LITERAL);
+            std::string labelName = labelNameToken.data.value();
+
+            InsertOpcode(Instruction::JUMP);
+            unresolvedSectionAddressValueLocalOffsets.push_back(std::make_pair(labelName, sectionData.size()));
+            InsertArg(Value::U64(0));
+        }
+        // Jump cond
+        else if (CheckToken(TokenType::JUMP_COND)) {
+            ExpectToken(TokenType::JUMP_COND);
+
+            Token labelNameToken = ExpectToken(TokenType::LITERAL);
+            std::string labelName = labelNameToken.data.value();
+            ExpectToken(TokenType::COMMA);
+
+            // Put condition onto stack
+            ParseValue(vars);
+
+            // Jump instr
+            InsertOpcode(Instruction::JUMP_COND);
+            unresolvedSectionAddressValueLocalOffsets.push_back(std::make_pair(labelName, sectionData.size()));
+            InsertArg(Value::U64(0));
+        }
         // new variable assignment
         else if (CheckToken(TokenType::LITERAL) && CheckToken(TokenType::PERCENT, 1)) {
             Token variableTypeToken = ExpectToken(TokenType::LITERAL);

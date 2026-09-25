@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     Snap::VM vm;
     vm.loadSnapCBinary(file);
     auto ret = vm.call("Main", { });
-    std::cout << ret.value().asF32() << '\n';
+    std::cout << ret.value().asU32() << '\n';
 
 
 
